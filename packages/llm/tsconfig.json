@@ -14,7 +14,8 @@
     "declarationMap": true,
     "sourceMap": true,
     "verbatimModuleSyntax": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "composite": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
