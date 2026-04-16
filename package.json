@@ -16,7 +16,7 @@
   "scripts": {
     "start": "node packages/cli/dist/index.js",
     "agent": "node packages/cli/dist/src/simple-agent.js",
-    "chat": "node packages/cli/dist/src/minimal-agent.js",
+    "tiny": "node packages/cli/dist/src/tiny-agent.js",
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces --if-present --parallel",
     "lint": "eslint . --ext .ts,.tsx",
@@ -29,7 +29,8 @@
   },
   "bin": {
     "qwen": "packages/cli/dist/index.js",
-    "qwen-agent": "packages/cli/dist/src/simple-agent.js"
+    "qwen-agent": "packages/cli/dist/src/simple-agent.js",
+    "tiny-agent": "packages/cli/dist/src/tiny-agent.js"
   },
   "files": [
     "packages/cli/dist/",

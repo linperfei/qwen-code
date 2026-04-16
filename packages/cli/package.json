@@ -12,7 +12,7 @@
   "bin": {
     "qwen": "dist/index.js",
     "qwen-agent": "dist/src/simple-agent.js",
-    "qwen-chat": "dist/src/minimal-agent.js"
+    "tiny-agent": "dist/src/tiny-agent.js"
   },
   "scripts": {
     "build": "tsc --build",
