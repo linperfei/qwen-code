@@ -416,13 +416,18 @@ async function runRepl(config: Config) {
 
   printBanner(config);
 
-  // Print initial prompt
-  printPrompt(rl);
+  // Track if this is interactive (TTY) or piped input
+  const isInteractive = input.isTTY;
+
+  // Print initial prompt only for interactive mode
+  if (isInteractive) {
+    printPrompt(rl);
+  }
 
   // Use async iterator for better EOF handling
   for await (const userInput of rl) {
     if (!userInput.trim()) {
-      printPrompt(rl);
+      if (isInteractive) printPrompt(rl);
       continue;
     }
 
@@ -437,7 +442,7 @@ async function runRepl(config: Config) {
     if (cmd === 'clear') {
       console.clear();
       printBanner(config);
-      printPrompt(rl);
+      if (isInteractive) printPrompt(rl);
       continue;
     }
 
@@ -455,7 +460,7 @@ ${c.bold}Built-in Tools:${c.reset}
   run_shell   - Execute shell command
   list_files  - List directory contents
 `);
-      printPrompt(rl);
+      if (isInteractive) printPrompt(rl);
       continue;
     }
 
@@ -474,7 +479,7 @@ Or set environment variables:
 
 Config file: ${CONFIG_FILE}${c.reset}
 `);
-      printPrompt(rl);
+      if (isInteractive) printPrompt(rl);
       continue;
     }
 
@@ -526,7 +531,12 @@ Config file: ${CONFIG_FILE}${c.reset}
       printDivider();
     }
 
-    // Print prompt for next input
+    // For piped input, exit after processing one message
+    if (!isInteractive) {
+      break;
+    }
+
+    // Print prompt for next input (interactive mode only)
     printPrompt(rl);
   }
 
