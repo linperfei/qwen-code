@@ -170,7 +170,8 @@ export class AgentLoop {
     signal?: AbortSignal,
   ): Promise<GenerateResponse> {
     const tools = this.toolExecutor.getToolDefinitions();
-    const config = { model: 'default' }; // Simplified
+    // Pass empty config - the LLM client will use its configured model
+    const config = {};
 
     let fullContent = '';
     let toolCalls: ToolCall[] = [];

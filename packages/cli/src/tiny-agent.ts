@@ -138,15 +138,16 @@ ${c.bold}Config File:${c.reset}
 
 function printCurrentConfig(): void {
   const saved = loadSavedConfig();
-  // Get effective config (env vars override saved)
+  // Get effective config with same priority as getConfig
   const model =
     process.env['TINY_MODEL'] || saved.model || DEFAULT_CONFIG.model;
   const baseUrl =
     process.env['TINY_BASE_URL'] || saved.baseUrl || DEFAULT_CONFIG.baseUrl;
+  // Priority: TINY_API_KEY > saved config > OPENAI_API_KEY
   const apiKey =
     process.env['TINY_API_KEY'] ||
-    process.env['OPENAI_API_KEY'] ||
-    saved.apiKey;
+    saved.apiKey ||
+    process.env['OPENAI_API_KEY'];
 
   console.log(`
 ${c.bold}Current Configuration:${c.reset}
@@ -159,8 +160,7 @@ ${c.bold}Saved Configuration (${CONFIG_FILE}):${c.reset}
   Base URL: ${saved.baseUrl}
   API Key:  ${saved.apiKey ? '***' + saved.apiKey.slice(-4) : '(not set)'}
 
-${c.dim}Note: Environment variables (TINY_MODEL, TINY_BASE_URL, TINY_API_KEY)
-take precedence over saved configuration.${c.reset}
+${c.dim}Priority: CLI args > TINY_* env vars > config file > OPENAI_API_KEY${c.reset}
 `);
 }
 
@@ -188,11 +188,13 @@ function getConfig(): Config {
     saved.baseUrl ||
     DEFAULT_CONFIG.baseUrl;
 
+  // Priority for API key: CLI args > TINY_API_KEY env > saved config > OPENAI_API_KEY env
+  // Note: saved config takes precedence over OPENAI_API_KEY to respect user's explicit setting
   const apiKey =
     args.apiKey ||
     process.env['TINY_API_KEY'] ||
-    process.env['OPENAI_API_KEY'] ||
     saved.apiKey ||
+    process.env['OPENAI_API_KEY'] ||
     undefined;
 
   // Save config for future use (without API key for security, unless explicitly provided)
