@@ -45,7 +45,6 @@ import { SkillsList } from './views/SkillsList.js';
 import { ToolsList } from './views/ToolsList.js';
 import { McpStatus } from './views/McpStatus.js';
 import { ContextUsage } from './views/ContextUsage.js';
-import { ArenaAgentCard, ArenaSessionCard } from './arena/ArenaCards.js';
 import { InsightProgressMessage } from './messages/InsightProgressMessage.js';
 import { BtwMessage } from './messages/BtwMessage.js';
 import { useCompactMode } from '../contexts/CompactModeContext.js';
@@ -224,18 +223,6 @@ const HistoryItemDisplayComponent: React.FC<HistoryItemDisplayProps> = ({
           skills={itemForDisplay.skills}
           isEstimated={itemForDisplay.isEstimated}
           showDetails={itemForDisplay.showDetails}
-        />
-      )}
-      {itemForDisplay.type === 'arena_agent_complete' && (
-        <ArenaAgentCard agent={itemForDisplay.agent} width={boxWidth} />
-      )}
-      {itemForDisplay.type === 'arena_session_complete' && (
-        <ArenaSessionCard
-          sessionStatus={itemForDisplay.sessionStatus}
-          task={itemForDisplay.task}
-          totalDurationMs={itemForDisplay.totalDurationMs}
-          agents={itemForDisplay.agents}
-          width={boxWidth}
         />
       )}
       {itemForDisplay.type === 'insight_progress' && (

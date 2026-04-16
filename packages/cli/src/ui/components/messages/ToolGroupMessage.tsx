@@ -5,7 +5,7 @@
  */
 
 import type React from 'react';
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { Box } from 'ink';
 import type { IndividualToolCallDisplay } from '../../types.js';
 import { ToolCallStatus } from '../../types.js';
@@ -83,22 +83,6 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
     [toolCalls],
   );
 
-  // "First-come, first-served" focus lock: once a subagent's confirmation
-  // appears, it keeps keyboard focus until the user resolves it. Only then
-  // does focus move to the next pending subagent. This prevents the jarring
-  // experience of focus jumping away while the user is mid-selection.
-  const focusedSubagentRef = useRef<string | null>(null);
-
-  const stillPending = subagentsAwaitingApproval.some(
-    (tc) => tc.callId === focusedSubagentRef.current,
-  );
-  if (!stillPending) {
-    // Release stale lock and promote the next pending subagent (if any).
-    focusedSubagentRef.current = subagentsAwaitingApproval[0]?.callId ?? null;
-  }
-
-  const focusedSubagentCallId = focusedSubagentRef.current;
-
   // Compact mode: entire group → single line summary
   // Force-expand when: user must interact (Confirming or subagent pending
   // confirmation), tool errored, shell is focused, or user-initiated
@@ -174,19 +158,6 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
     >
       {toolCalls.map((tool) => {
         const isConfirming = toolAwaitingApproval?.callId === tool.callId;
-        // A subagent's inline confirmation should only receive keyboard focus
-        // when (1) there is no direct tool-level confirmation active, and
-        // (2) this tool currently holds the focus lock.
-        const isSubagentFocused =
-          isFocused &&
-          !toolAwaitingApproval &&
-          focusedSubagentCallId === tool.callId;
-        // Show the waiting indicator only when this subagent genuinely has a
-        // pending confirmation AND another subagent holds the focus lock.
-        const isWaitingForOtherApproval =
-          isAgentWithPendingConfirmation(tool.resultDisplay) &&
-          focusedSubagentCallId !== null &&
-          focusedSubagentCallId !== tool.callId;
         return (
           <Box key={tool.callId} flexDirection="column" minHeight={1}>
             <Box flexDirection="row" alignItems="center">
@@ -210,8 +181,6 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
                   tool.status === ToolCallStatus.Error ||
                   isAgentWithPendingConfirmation(tool.resultDisplay)
                 }
-                isFocused={isSubagentFocused}
-                isWaitingForOtherApproval={isWaitingForOtherApproval}
               />
             </Box>
             {tool.status === ToolCallStatus.Confirming &&

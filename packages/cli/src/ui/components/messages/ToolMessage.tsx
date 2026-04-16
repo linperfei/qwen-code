@@ -15,13 +15,11 @@ import { MaxSizedBox } from '../shared/MaxSizedBox.js';
 import { TodoDisplay } from '../TodoDisplay.js';
 import type {
   TodoResultDisplay,
-  AgentResultDisplay,
   PlanResultDisplay,
   AnsiOutput,
   Config,
   McpToolProgressData,
 } from '@qwen-code/qwen-code-core';
-import { AgentExecutionDisplay } from '../subagents/index.js';
 import { PlanSummaryDisplay } from '../PlanSummaryDisplay.js';
 import { ShellInputPrompt } from '../ShellInputPrompt.js';
 import { SHELL_COMMAND_NAME, SHELL_NAME } from '../../constants.js';
@@ -50,7 +48,6 @@ type DisplayRendererResult =
   | { type: 'plan'; data: PlanResultDisplay }
   | { type: 'string'; data: string }
   | { type: 'diff'; data: { fileDiff: string; fileName: string } }
-  | { type: 'task'; data: AgentResultDisplay }
   | { type: 'ansi'; data: AnsiOutput };
 
 /**
@@ -86,19 +83,6 @@ const useResultDisplayRenderer = (
       return {
         type: 'plan',
         data: resultDisplay as PlanResultDisplay,
-      };
-    }
-
-    // Check for SubagentExecutionResultDisplay (for non-task tools)
-    if (
-      typeof resultDisplay === 'object' &&
-      resultDisplay !== null &&
-      'type' in resultDisplay &&
-      resultDisplay.type === 'task_execution'
-    ) {
-      return {
-        type: 'task',
-        data: resultDisplay as AgentResultDisplay,
       };
     }
 
@@ -162,34 +146,6 @@ const PlanResultRenderer: React.FC<{
     data={data}
     availableHeight={availableHeight}
     childWidth={childWidth}
-  />
-);
-
-/**
- * Component to render subagent execution results
- */
-const SubagentExecutionRenderer: React.FC<{
-  data: AgentResultDisplay;
-  availableHeight?: number;
-  childWidth: number;
-  config: Config;
-  isFocused?: boolean;
-  isWaitingForOtherApproval?: boolean;
-}> = ({
-  data,
-  availableHeight,
-  childWidth,
-  config,
-  isFocused,
-  isWaitingForOtherApproval,
-}) => (
-  <AgentExecutionDisplay
-    data={data}
-    availableHeight={availableHeight}
-    childWidth={childWidth}
-    config={config}
-    isFocused={isFocused}
-    isWaitingForOtherApproval={isWaitingForOtherApproval}
   />
 );
 
@@ -260,10 +216,6 @@ export interface ToolMessageProps extends IndividualToolCallDisplay {
   embeddedShellFocused?: boolean;
   config?: Config;
   forceShowResult?: boolean;
-  /** Whether this tool's subagent confirmation prompt should respond to keyboard input. */
-  isFocused?: boolean;
-  /** Whether another subagent's approval currently holds the focus lock, blocking this one. */
-  isWaitingForOtherApproval?: boolean;
 }
 
 export const ToolMessage: React.FC<ToolMessageProps> = ({
@@ -280,8 +232,6 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
   ptyId,
   config,
   forceShowResult,
-  isFocused,
-  isWaitingForOtherApproval,
 }) => {
   const settings = useSettings();
   const isThisShellFocused =
@@ -379,16 +329,6 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
                 data={effectiveDisplayRenderer.data}
                 availableHeight={availableHeight}
                 childWidth={innerWidth}
-              />
-            )}
-            {effectiveDisplayRenderer.type === 'task' && config && (
-              <SubagentExecutionRenderer
-                data={effectiveDisplayRenderer.data}
-                availableHeight={availableHeight}
-                childWidth={innerWidth}
-                config={config}
-                isFocused={isFocused}
-                isWaitingForOtherApproval={isWaitingForOtherApproval}
               />
             )}
             {effectiveDisplayRenderer.type === 'diff' && (

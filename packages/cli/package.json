@@ -11,7 +11,8 @@
   "types": "dist/index.d.ts",
   "bin": {
     "qwen": "dist/index.js",
-    "qwen-agent": "dist/src/simple-agent.js"
+    "qwen-agent": "dist/src/simple-agent.js",
+    "qwen-chat": "dist/src/minimal-agent.js"
   },
   "scripts": {
     "build": "tsc --build",
