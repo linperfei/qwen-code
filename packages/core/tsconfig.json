@@ -15,9 +15,6 @@
   "exclude": [
     "node_modules",
     "dist",
-    "src/extension/github.test.ts",
-    "src/lsp/LspConfigLoader.test.ts",
-    "src/services/sessionService.test.ts",
-    "src/utils/pathReader.test.ts"
+    "src/**/*.test.ts"
   ]
 }
