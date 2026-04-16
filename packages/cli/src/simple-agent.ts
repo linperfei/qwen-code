@@ -9,9 +9,9 @@
  * @fileoverview Simple Agent CLI - A minimal command-line interface for running agents.
  *
  * Usage:
- *   qwen-agent "Write a hello world program in Python"
- *   qwen-agent --model gpt-4o "Explain quantum computing"
- *   qwen-agent --help
+ *   tiny-agent "Write a hello world program in Python"
+ *   tiny-agent --model gpt-4o "Explain quantum computing"
+ *   tiny-agent --help
  */
 
 import {
@@ -24,30 +24,53 @@ import {
   createSimpleToolExecutor,
   type AgentLoopEventHandler,
 } from '@qwen-code/qwen-code-core';
+import { readFile, writeFile, readdir } from 'node:fs/promises';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+import { glob } from 'glob';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+
+const execAsync = promisify(exec);
 
 // ============================================================================
-// CLI Argument Parsing
+// Configuration
 // ============================================================================
 
-interface CliArgs {
-  prompt: string;
+interface Config {
   model: string;
   baseUrl: string;
   apiKey: string | undefined;
   maxTurns: number;
-  help: boolean;
 }
 
-function parseArgs(): CliArgs {
+const CONFIG_DIR = join(homedir(), '.tiny-agent');
+const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
+
+const DEFAULT_CONFIG = {
+  model: 'gpt-4o',
+  baseUrl: 'https://api.openai.com/v1',
+  apiKey: '',
+};
+
+function loadSavedConfig(): { model: string; baseUrl: string; apiKey: string } {
+  try {
+    if (existsSync(CONFIG_FILE)) {
+      const content = readFileSync(CONFIG_FILE, 'utf-8');
+      return { ...DEFAULT_CONFIG, ...JSON.parse(content) };
+    }
+  } catch {
+    // Ignore errors
+  }
+  return { ...DEFAULT_CONFIG };
+}
+
+function parseArgs(): { prompt: string; showConfig: boolean; help: boolean } & Partial<Config> {
   const args = process.argv.slice(2);
-  const result: CliArgs = {
+  const result: { prompt: string; showConfig: boolean; help: boolean } & Partial<Config> = {
     prompt: '',
-    model: process.env['QWEN_MODEL'] || 'qwen-coder-plus',
-    baseUrl:
-      process.env['QWEN_BASE_URL'] ||
-      'https://dashscope.aliyuncs.com/compatible-mode/v1',
-    apiKey: process.env['DASHSCOPE_API_KEY'] || process.env['OPENAI_API_KEY'],
-    maxTurns: 10,
+    showConfig: false,
     help: false,
   };
 
@@ -56,10 +79,12 @@ function parseArgs(): CliArgs {
 
     if (arg === '--help' || arg === '-h') {
       result.help = true;
+    } else if (arg === '--config' || arg === '-c') {
+      result.showConfig = true;
     } else if (arg === '--model' || arg === '-m') {
-      result.model = args[++i] || result.model;
+      result.model = args[++i];
     } else if (arg === '--base-url' || arg === '-u') {
-      result.baseUrl = args[++i] || result.baseUrl;
+      result.baseUrl = args[++i];
     } else if (arg === '--api-key' || arg === '-k') {
       result.apiKey = args[++i];
     } else if (arg === '--max-turns' || arg === '-t') {
@@ -72,30 +97,91 @@ function parseArgs(): CliArgs {
   return result;
 }
 
+function getConfig(): Config {
+  const args = parseArgs();
+
+  if (args.showConfig) {
+    const saved = loadSavedConfig();
+    const model =
+      process.env['TINY_MODEL'] || saved.model || DEFAULT_CONFIG.model;
+    const baseUrl =
+      process.env['TINY_BASE_URL'] || saved.baseUrl || DEFAULT_CONFIG.baseUrl;
+    const apiKey =
+      process.env['TINY_API_KEY'] ||
+      saved.apiKey ||
+      process.env['OPENAI_API_KEY'];
+
+    // eslint-disable-next-line no-console
+    console.log(`
+Current Configuration:
+  Model:    ${model}
+  Base URL: ${baseUrl}
+  API Key:  ${apiKey ? '***' + apiKey.slice(-4) : '(not set)'}
+
+Config file: ${CONFIG_FILE}
+`);
+    process.exit(0);
+  }
+
+  const saved = loadSavedConfig();
+
+  // Priority: CLI args > env vars > saved config > defaults
+  const model =
+    args.model ||
+    process.env['TINY_MODEL'] ||
+    saved.model ||
+    DEFAULT_CONFIG.model;
+
+  const baseUrl =
+    args.baseUrl ||
+    process.env['TINY_BASE_URL'] ||
+    saved.baseUrl ||
+    DEFAULT_CONFIG.baseUrl;
+
+  // Priority: CLI args > TINY_API_KEY > saved config > OPENAI_API_KEY
+  const apiKey =
+    args.apiKey ||
+    process.env['TINY_API_KEY'] ||
+    saved.apiKey ||
+    process.env['OPENAI_API_KEY'] ||
+    undefined;
+
+  return {
+    model,
+    baseUrl,
+    apiKey,
+    maxTurns: args.maxTurns || 10,
+  };
+}
+
 function printHelp(): void {
   // eslint-disable-next-line no-console
   console.log(`
-qwen-agent - A minimal AI agent CLI
+Tiny Agent - Single Query Mode
 
 Usage:
-  qwen-agent [options] <prompt>
+  tiny-agent [options] <prompt>
 
 Options:
   -h, --help          Show this help message
-  -m, --model         Model to use (default: qwen-coder-plus)
-  -u, --base-url      API base URL (default: DashScope)
-  -k, --api-key       API key (or set DASHSCOPE_API_KEY env)
+  -m, --model         Model to use (default: gpt-4o)
+  -u, --base-url      API base URL
+  -k, --api-key       API key
   -t, --max-turns     Maximum agent turns (default: 10)
+  -c, --config        Show current configuration
 
 Environment Variables:
-  DASHSCOPE_API_KEY   API key for DashScope/Qwen
-  QWEN_MODEL          Default model name
-  QWEN_BASE_URL       Default API base URL
+  TINY_API_KEY        API key for the model service
+  TINY_MODEL          Model name
+  TINY_BASE_URL       API base URL
+
+Config File:
+  ${CONFIG_FILE}
 
 Examples:
-  qwen-agent "Write a Python function to sort a list"
-  qwen-agent -m gpt-4o "Explain async/await in JavaScript"
-  qwen-agent -t 5 "Debug this code: print(x)"
+  tiny-agent "Write a Python function to sort a list"
+  tiny-agent -m gpt-4o "Explain async/await in JavaScript"
+  tiny-agent -t 5 "Debug this code: print(x)"
 `);
 }
 
@@ -110,10 +196,7 @@ const BUILTIN_TOOLS: ToolDefinition[] = [
     parameters: {
       type: 'object',
       properties: {
-        path: {
-          type: 'string',
-          description: 'The path to the file to read',
-        },
+        path: { type: 'string', description: 'File path to read' },
       },
       required: ['path'],
     },
@@ -124,14 +207,8 @@ const BUILTIN_TOOLS: ToolDefinition[] = [
     parameters: {
       type: 'object',
       properties: {
-        path: {
-          type: 'string',
-          description: 'The path to the file to write',
-        },
-        content: {
-          type: 'string',
-          description: 'The content to write to the file',
-        },
+        path: { type: 'string', description: 'File path to write' },
+        content: { type: 'string', description: 'Content to write' },
       },
       required: ['path', 'content'],
     },
@@ -142,10 +219,7 @@ const BUILTIN_TOOLS: ToolDefinition[] = [
     parameters: {
       type: 'object',
       properties: {
-        command: {
-          type: 'string',
-          description: 'The shell command to execute',
-        },
+        command: { type: 'string', description: 'Shell command to execute' },
       },
       required: ['command'],
     },
@@ -156,26 +230,13 @@ const BUILTIN_TOOLS: ToolDefinition[] = [
     parameters: {
       type: 'object',
       properties: {
-        path: {
-          type: 'string',
-          description: 'The directory path to list',
-        },
-        pattern: {
-          type: 'string',
-          description: 'Glob pattern to filter files',
-        },
+        path: { type: 'string', description: 'Directory path' },
+        pattern: { type: 'string', description: 'Optional glob pattern' },
       },
       required: ['path'],
     },
   },
 ];
-
-import { readFile, writeFile, readdir } from 'node:fs/promises';
-import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
-import { glob } from 'glob';
-
-const execAsync = promisify(exec);
 
 // ============================================================================
 // Main Entry Point
@@ -189,27 +250,31 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
+  const config = getConfig();
+
   if (!args.prompt) {
     // eslint-disable-next-line no-console
-    console.error(
-      'Error: No prompt provided. Use --help for usage information.',
-    );
+    console.error('Error: No prompt provided. Use --help for usage information.');
     process.exit(1);
   }
 
-  if (!args.apiKey) {
+  if (!config.apiKey) {
     // eslint-disable-next-line no-console
-    console.error(
-      'Error: No API key provided. Set DASHSCOPE_API_KEY environment variable or use --api-key.',
-    );
+    console.error(`Error: No API key found.
+
+Set API key via:
+  1. Environment variable: export TINY_API_KEY=your-api-key
+  2. Command line: tiny-agent --api-key your-api-key
+  3. Config file: ${CONFIG_FILE}
+`);
     process.exit(1);
   }
 
   // Create LLM client
   const llmConfig: LLMConfig = {
-    model: args.model,
-    baseUrl: args.baseUrl,
-    apiKey: args.apiKey,
+    model: config.model,
+    baseUrl: config.baseUrl,
+    apiKey: config.apiKey,
   };
 
   const llmClient = createLLMClient(llmConfig);
@@ -218,85 +283,60 @@ async function main(): Promise<void> {
   const toolExecutor = createSimpleToolExecutor();
 
   // Register tool handlers
-  toolExecutor.registerToolWithHandler(
-    BUILTIN_TOOLS[0]!, // read_file
-    async (args) => {
-      const path = args['path'] as string;
-      try {
-        const content = await readFile(path, 'utf-8');
-        return content;
-      } catch (error) {
-        return `Error reading file: ${error instanceof Error ? error.message : String(error)}`;
-      }
-    },
-  );
+  toolExecutor.registerToolWithHandler(BUILTIN_TOOLS[0]!, async (toolArgs) => {
+    const path = toolArgs['path'] as string;
+    try {
+      return await readFile(path, 'utf-8');
+    } catch (error) {
+      return `Error: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  });
 
-  toolExecutor.registerToolWithHandler(
-    BUILTIN_TOOLS[1]!, // write_file
-    async (args) => {
-      const path = args['path'] as string;
-      const content = args['content'] as string;
-      try {
-        await writeFile(path, content, 'utf-8');
-        return `Successfully wrote to ${path}`;
-      } catch (error) {
-        return `Error writing file: ${error instanceof Error ? error.message : String(error)}`;
-      }
-    },
-  );
+  toolExecutor.registerToolWithHandler(BUILTIN_TOOLS[1]!, async (toolArgs) => {
+    const path = toolArgs['path'] as string;
+    const content = toolArgs['content'] as string;
+    try {
+      await writeFile(path, content, 'utf-8');
+      return `Wrote ${content.length} bytes to ${path}`;
+    } catch (error) {
+      return `Error: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  });
 
-  toolExecutor.registerToolWithHandler(
-    BUILTIN_TOOLS[2]!, // run_shell
-    async (args) => {
-      const command = args['command'] as string;
-      try {
-        const { stdout, stderr } = await execAsync(command, {
-          maxBuffer: 1024 * 1024 * 10, // 10MB buffer
-          timeout: 60000, // 60 second timeout
-        });
-        return stdout || stderr || 'Command completed with no output';
-      } catch (error) {
-        const execError = error as {
-          stdout?: string;
-          stderr?: string;
-          message?: string;
-        };
-        return (
-          execError.stdout ||
-          execError.stderr ||
-          execError.message ||
-          'Command failed'
-        );
-      }
-    },
-  );
+  toolExecutor.registerToolWithHandler(BUILTIN_TOOLS[2]!, async (toolArgs) => {
+    const command = toolArgs['command'] as string;
+    try {
+      const { stdout, stderr } = await execAsync(command, {
+        maxBuffer: 1024 * 1024 * 10,
+        timeout: 60000,
+      });
+      return stdout || stderr || 'Done';
+    } catch (error) {
+      const e = error as { stdout?: string; stderr?: string; message?: string };
+      return e.stdout || e.stderr || e.message || 'Failed';
+    }
+  });
 
-  toolExecutor.registerToolWithHandler(
-    BUILTIN_TOOLS[3]!, // list_files
-    async (args) => {
-      const path = args['path'] as string;
-      const pattern = args['pattern'] as string | undefined;
-
-      try {
-        if (pattern) {
-          const files = await glob(pattern, { cwd: path });
-          return files.join('\n');
-        } else {
-          const files = await readdir(path);
-          return files.join('\n');
-        }
-      } catch (error) {
-        return `Error listing files: ${error instanceof Error ? error.message : String(error)}`;
+  toolExecutor.registerToolWithHandler(BUILTIN_TOOLS[3]!, async (toolArgs) => {
+    const path = toolArgs['path'] as string;
+    const pattern = toolArgs['pattern'] as string | undefined;
+    try {
+      if (pattern) {
+        const files = await glob(pattern, { cwd: path });
+        return files.join('\n') || 'No files found';
       }
-    },
-  );
+      const files = await readdir(path);
+      return files.join('\n');
+    } catch (error) {
+      return `Error: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  });
 
   // Create agent loop
   const agent = createAgentLoop(llmClient, toolExecutor, {
-    maxTurns: args.maxTurns,
+    maxTurns: config.maxTurns,
     maxTimeMinutes: 30,
-    systemPrompt:
-      'You are a helpful coding assistant. Use the available tools to help the user.',
+    systemPrompt: 'You are a helpful coding assistant. Use the available tools to help the user.',
     userMessage: '',
   });
 
@@ -307,28 +347,14 @@ async function main(): Promise<void> {
         process.stdout.write(event.data as string);
         break;
       case 'tool_call': {
-        const toolCall = event.data as {
-          name: string;
-          arguments: Record<string, unknown>;
-        };
+        const toolCall = event.data as { name: string };
         // eslint-disable-next-line no-console
-        console.error(`\n[Tool: ${toolCall.name}]`);
-        break;
-      }
-      case 'tool_result': {
-        const result = event.data as { output: string; isError: boolean };
-        if (result.isError) {
-          // eslint-disable-next-line no-console
-          console.error(`[Error: ${result.output.slice(0, 200)}...]`);
-        }
+        console.log(`\n[Tool: ${toolCall.name}]`);
         break;
       }
       case 'error':
         // eslint-disable-next-line no-console
-        console.error('\n[Error]', event.data);
-        break;
-      default:
-        // Ignore other event types
+        console.log(`\n[Error] ${event.data}`);
         break;
     }
   };
@@ -337,34 +363,27 @@ async function main(): Promise<void> {
 
   // Run the agent
   // eslint-disable-next-line no-console
-  console.log(`\n🤖 Agent started with model: ${args.model}`);
-  // eslint-disable-next-line no-console
-  console.log(`📝 Prompt: ${args.prompt}\n`);
-  // eslint-disable-next-line no-console
-  console.log('─'.repeat(50) + '\n');
+  console.log(`
+🤖 Model: ${config.model}
+📝 Prompt: ${args.prompt}
+${'─'.repeat(50)}
+`);
 
   try {
     const result = await agent.run(args.prompt);
 
     // eslint-disable-next-line no-console
-    console.log('\n' + '─'.repeat(50));
-    // eslint-disable-next-line no-console
-    console.log(`\n✅ Completed in ${result.turns} turn(s)`);
-    // eslint-disable-next-line no-console
-    console.log(`📊 Reason: ${result.reason}`);
-    // eslint-disable-next-line no-console
-    console.log(`⏱️  Duration: ${(result.durationMs / 1000).toFixed(2)}s\n`);
+    console.log(`
+${'─'.repeat(50)}
+✅ Turns: ${result.turns} | Reason: ${result.reason} | Duration: ${(result.durationMs / 1000).toFixed(2)}s
+`);
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error(
-      '\n❌ Agent failed:',
-      error instanceof Error ? error.message : String(error),
-    );
+    console.error('\n❌ Error:', error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
 }
 
-// Run main
 main().catch((error) => {
   // eslint-disable-next-line no-console
   console.error('Fatal error:', error);
