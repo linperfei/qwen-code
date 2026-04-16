@@ -1,23 +1,22 @@
 {
   "name": "@qwen-code/cli",
   "version": "0.15.0",
-  "description": "Qwen Code CLI - Minimal AI Agent",
+  "description": "Tiny Agent - Minimal AI Coding Agent CLI",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/linperfei/qwen-code.git"
   },
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/tiny-agent.js",
+  "types": "dist/src/tiny-agent.d.ts",
   "bin": {
-    "qwen": "dist/index.js",
-    "qwen-agent": "dist/src/simple-agent.js",
-    "tiny-agent": "dist/src/tiny-agent.js"
+    "tiny-agent": "dist/src/tiny-agent.js",
+    "qwen-agent": "dist/src/simple-agent.js"
   },
   "scripts": {
     "build": "tsc --build",
-    "start": "node dist/index.js",
-    "lint": "eslint . --ext .ts,.tsx",
+    "start": "node dist/tiny-agent.js",
+    "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -28,31 +27,11 @@
   "dependencies": {
     "@qwen-code/llm": "file:../llm",
     "@qwen-code/qwen-code-core": "file:../core",
-    "@types/semver": "^7.7.1",
-    "cli-spinners": "^3.4.0",
-    "command-exists": "^1.2.9",
-    "comment-json": "^5.0.0",
-    "glob": "^10.5.0",
-    "hast": "^0.0.2",
-    "ink": "^6.2.3",
-    "ink-gradient": "^4.0.0",
-    "ink-link": "^5.0.0",
-    "ink-spinner": "^5.0.0",
-    "lowlight": "^3.3.0",
-    "react": "^19.1.0",
-    "read-package-up": "^12.0.0",
-    "semver": "^7.7.4",
-    "yargs": "^17.7.2"
+    "glob": "^10.5.0"
   },
   "devDependencies": {
-    "@types/command-exists": "^1.2.3",
     "@types/node": "^20.11.24",
-    "@types/react": "^19.1.8",
-    "@types/update-notifier": "^6.0.8",
-    "@types/yargs": "^17.0.32",
-    "react-dom": "^19.1.0",
     "typescript": "^5.3.3",
-    "update-notifier": "^7.3.1",
     "vitest": "^3.1.1"
   },
   "engines": {

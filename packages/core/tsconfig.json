@@ -1,20 +1,26 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "lib": ["DOM", "DOM.Iterable", "ES2023"],
-    "composite": true,
-    "types": ["node", "vitest/globals"],
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "noPropertyAccessFromIndexSignature": false,
-    "paths": {
-      "@lydell/node-pty": ["../../node_modules/@lydell/node-pty/node-pty.d.ts"]
-    }
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "composite": true,
+    "types": ["node"]
   },
-  "include": ["index.ts", "src/**/*.ts", "src/**/*.json"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/**/*.test.ts"
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../llm" }
   ]
 }

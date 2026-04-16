@@ -1,7 +1,7 @@
 {
   "name": "@qwen-code/qwen-code",
   "version": "0.15.0",
-  "description": "Minimal AI Agent CLI",
+  "description": "Tiny Agent - Minimal AI Coding Agent CLI",
   "engines": {
     "node": ">=20.0.0"
   },
@@ -14,23 +14,20 @@
     "url": "git+https://github.com/linperfei/qwen-code.git"
   },
   "scripts": {
-    "start": "node packages/cli/dist/index.js",
-    "agent": "node packages/cli/dist/src/simple-agent.js",
+    "start": "node packages/cli/dist/src/tiny-agent.js",
     "tiny": "node packages/cli/dist/src/tiny-agent.js",
+    "agent": "node packages/cli/dist/src/simple-agent.js",
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces --if-present --parallel",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "clean": "rm -rf packages/*/dist node_modules",
-    "prepare": "husky",
-    "pre-commit": "lint-staged"
+    "clean": "rm -rf packages/*/dist node_modules"
   },
   "bin": {
-    "qwen": "packages/cli/dist/index.js",
-    "qwen-agent": "packages/cli/dist/src/simple-agent.js",
-    "tiny-agent": "packages/cli/dist/src/tiny-agent.js"
+    "tiny-agent": "packages/cli/dist/src/tiny-agent.js",
+    "qwen-agent": "packages/cli/dist/src/simple-agent.js"
   },
   "files": [
     "packages/cli/dist/",
