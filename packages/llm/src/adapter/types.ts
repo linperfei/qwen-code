@@ -107,8 +107,8 @@ export interface StreamChunk {
 // ============================================================================
 
 export interface LLMConfig {
-  /** Model identifier */
-  model: string;
+  /** Model identifier (optional - falls back to client's configured model) */
+  model?: string;
 
   /** API key (or reference to env var) */
   apiKey?: string;

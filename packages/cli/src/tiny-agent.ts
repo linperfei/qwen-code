@@ -22,6 +22,7 @@
  */
 
 import * as readline from 'node:readline/promises';
+import type { Interface } from 'node:readline';
 import { stdin as input, stdout as output } from 'node:process';
 import {
   createLLMClient,
@@ -370,8 +371,10 @@ Type 'config' to view/change settings.${c.reset}
 `);
 }
 
-function printPrompt() {
-  process.stdout.write(`${c.bold}${c.green}You:${c.reset} `);
+const PROMPT_TEXT = `${c.bold}${c.green}You:${c.reset} `;
+
+function printPrompt(rl: Interface) {
+  rl.prompt();
 }
 
 function printAssistant() {
@@ -397,6 +400,9 @@ function printDivider() {
 async function runRepl(config: Config) {
   const rl = readline.createInterface({ input, output });
 
+  // Set up prompt - readline will handle backspace correctly
+  rl.setPrompt(PROMPT_TEXT);
+
   // Create LLM client
   const llmConfig: LLMConfig = {
     model: config.model,
@@ -411,12 +417,12 @@ async function runRepl(config: Config) {
   printBanner(config);
 
   // Print initial prompt
-  printPrompt();
+  printPrompt(rl);
 
   // Use async iterator for better EOF handling
   for await (const userInput of rl) {
     if (!userInput.trim()) {
-      printPrompt();
+      printPrompt(rl);
       continue;
     }
 
@@ -431,7 +437,7 @@ async function runRepl(config: Config) {
     if (cmd === 'clear') {
       console.clear();
       printBanner(config);
-      printPrompt();
+      printPrompt(rl);
       continue;
     }
 
@@ -449,7 +455,7 @@ ${c.bold}Built-in Tools:${c.reset}
   run_shell   - Execute shell command
   list_files  - List directory contents
 `);
-      printPrompt();
+      printPrompt(rl);
       continue;
     }
 
@@ -468,7 +474,7 @@ Or set environment variables:
 
 Config file: ${CONFIG_FILE}${c.reset}
 `);
-      printPrompt();
+      printPrompt(rl);
       continue;
     }
 
@@ -521,7 +527,7 @@ Config file: ${CONFIG_FILE}${c.reset}
     }
 
     // Print prompt for next input
-    printPrompt();
+    printPrompt(rl);
   }
 
   rl.close();

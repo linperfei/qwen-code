@@ -41,7 +41,7 @@ export class OpenAIAdapter extends BaseLLMClient {
     const sampling = this.mergeSampling(config.sampling);
 
     const response = await this.client.chat.completions.create({
-      model: config.model || this.config.model,
+      model: config.model || this.config.model || 'gpt-4o',
       messages: this.convertMessages(messages),
       tools: tools.length > 0 ? this.convertTools(tools) : undefined,
       temperature: sampling.temperature,
@@ -76,7 +76,7 @@ export class OpenAIAdapter extends BaseLLMClient {
 
     const stream = await this.client.chat.completions.create(
       {
-        model: config.model || this.config.model,
+        model: config.model || this.config.model || 'gpt-4o',
         messages: this.convertMessages(messages),
         tools: tools.length > 0 ? this.convertTools(tools) : undefined,
         temperature: sampling.temperature,
