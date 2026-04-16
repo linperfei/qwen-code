@@ -118,7 +118,6 @@ function getNodeMemoryArgs(isDebugMode: boolean): string[] {
 }
 
 import { loadSandboxConfig } from './config/sandboxConfig.js';
-import { runAcpAgent } from './acp-integration/acpAgent.js';
 
 export function setupUnhandledRejectionHandler() {
   let unhandledRejectionOccurred = false;
@@ -418,13 +417,6 @@ export async function main() {
     // For other modes, initialize normally
     const initializationResult = await initializeApp(config, settings);
     profileCheckpoint('after_initialize_app');
-
-    if (config.getExperimentalZedIntegration()) {
-      await runAcpAgent(config, settings, argv);
-      // Clean up child processes and force exit, matching other non-interactive modes
-      await runExitCleanup();
-      process.exit(0);
-    }
 
     let input = config.getQuestion();
     const startupWarnings = [

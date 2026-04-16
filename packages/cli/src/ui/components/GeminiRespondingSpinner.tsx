@@ -61,7 +61,7 @@ export const GeminiSpinner: React.FC<GeminiSpinnerProps> = ({
     <Text>{altText}</Text>
   ) : (
     <Text color={theme.text.primary}>
-      <Spinner type={spinnerType} />
+      <Spinner type={spinnerType as 'dots'} />
     </Text>
   );
 };

@@ -51,7 +51,6 @@ import { getCliVersion } from '../utils/version.js';
 import { loadSandboxConfig } from './sandboxConfig.js';
 import { appEvents } from '../utils/events.js';
 import { mcpCommand } from '../commands/mcp.js';
-import { channelCommand } from '../commands/channel.js';
 
 // UUID v4 regex pattern for validation
 const SESSION_ID_REGEX =
@@ -584,9 +583,7 @@ export async function parseArguments(): Promise<CliArgs> {
     // Register Auth subcommands
     .command(authCommand)
     // Register Hooks subcommands
-    .command(hooksCommand)
-    // Register Channel subcommands
-    .command(channelCommand);
+    .command(hooksCommand);
 
   yargsInstance
     .version(await getCliVersion()) // This will enable the --version flag based on package.json
