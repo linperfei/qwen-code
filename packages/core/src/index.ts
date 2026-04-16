@@ -65,6 +65,33 @@ export * from './core/tokenLimits.js';
 export * from './core/turn.js';
 
 // ============================================================================
+// Agent Layer (New Architecture)
+// ============================================================================
+
+export type {
+  AgentContext,
+  AgentLoopConfig,
+  AgentLoopEvent,
+  AgentLoopEventHandler,
+  AgentLoopResult,
+  ContextSnapshot,
+  TerminateReason,
+  ToolExecutionResult,
+  ToolExecutor,
+} from './agent/index.js';
+
+export {
+  DEFAULT_AGENT_LOOP_CONFIG,
+  AgentContextImpl,
+  createAgentContext,
+  AgentLoop,
+  createAgentLoop,
+  BaseToolExecutor,
+  SimpleToolExecutor,
+  createSimpleToolExecutor,
+} from './agent/index.js';
+
+// ============================================================================
 // Tools
 // ============================================================================
 
