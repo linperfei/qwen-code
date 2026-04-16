@@ -138,7 +138,7 @@ export class AgentLoop {
     } catch (error) {
       terminateReason = 'error';
       this.emit('error', error);
-      throw error;
+      // Don't rethrow - let the caller handle it via the error event
     }
 
     return {

@@ -248,11 +248,8 @@ async function runRepl(config: Config) {
 
   printBanner();
 
-  // Main loop
-  while (true) {
-    printPrompt();
-    const userInput = await rl.question('');
-
+  // Use async iterator for better EOF handling
+  for await (const userInput of rl) {
     if (!userInput.trim()) continue;
 
     // Handle commands
@@ -326,7 +323,12 @@ ${c.bold}Built-in Tools:${c.reset}
       printDivider();
     } catch (error) {
       printError(error instanceof Error ? error.message : String(error));
+      console.log(); // newline after error
+      printDivider();
     }
+
+    // Print prompt for next input
+    printPrompt();
   }
 
   rl.close();
