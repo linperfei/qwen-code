@@ -410,9 +410,15 @@ async function runRepl(config: Config) {
 
   printBanner(config);
 
+  // Print initial prompt
+  printPrompt();
+
   // Use async iterator for better EOF handling
   for await (const userInput of rl) {
-    if (!userInput.trim()) continue;
+    if (!userInput.trim()) {
+      printPrompt();
+      continue;
+    }
 
     // Handle commands
     const cmd = userInput.trim().toLowerCase();
@@ -425,6 +431,7 @@ async function runRepl(config: Config) {
     if (cmd === 'clear') {
       console.clear();
       printBanner(config);
+      printPrompt();
       continue;
     }
 
@@ -442,6 +449,7 @@ ${c.bold}Built-in Tools:${c.reset}
   run_shell   - Execute shell command
   list_files  - List directory contents
 `);
+      printPrompt();
       continue;
     }
 
@@ -460,6 +468,7 @@ Or set environment variables:
 
 Config file: ${CONFIG_FILE}${c.reset}
 `);
+      printPrompt();
       continue;
     }
 
