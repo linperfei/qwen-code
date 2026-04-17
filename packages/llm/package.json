@@ -1,7 +1,7 @@
 {
-  "name": "@qwen-code/llm",
+  "name": "@tiny-agent/llm",
   "version": "0.1.0",
-  "description": "LLM service layer for qwen-code - unified model interaction",
+  "description": "Tiny Agent LLM - Unified model interaction layer",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

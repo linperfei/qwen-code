@@ -1,7 +1,7 @@
 {
-  "name": "@qwen-code/qwen-code-core",
+  "name": "@tiny-agent/core",
   "version": "0.15.0",
-  "description": "Qwen Code Core - Minimal Agent Library",
+  "description": "Tiny Agent Core - Minimal Agent Library",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/linperfei/qwen-code.git"
@@ -20,7 +20,7 @@
     "dist"
   ],
   "dependencies": {
-    "@qwen-code/llm": "file:../llm"
+    "@tiny-agent/llm": "file:../llm"
   },
   "devDependencies": {
     "@types/node": "^20.11.24",

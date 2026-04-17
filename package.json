@@ -1,7 +1,7 @@
 {
-  "name": "@qwen-code/qwen-code",
+  "name": "tiny-agent",
   "version": "0.15.0",
-  "description": "Tiny Agent - Minimal AI Coding Agent CLI",
+  "description": "Tiny Agent - Minimal AI Coding Agent",
   "engines": {
     "node": ">=20.0.0"
   },

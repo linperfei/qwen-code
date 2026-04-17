@@ -1,11 +1,11 @@
 /**
  * @license
- * Copyright 2026 Qwen Team
+ * Copyright 2026 Tiny Agent Team
  * SPDX-License-Identifier: Apache-2.0
  */
 
 /**
- * @fileoverview LLM Layer for qwen-code
+ * @fileoverview LLM Layer for Tiny Agent
  *
  * This package provides a unified interface for interacting with LLM providers.
  * Design principles:
@@ -17,7 +17,7 @@
  *
  * @example
  * ```typescript
- * import { createLLMClient, resolveModelConfig } from '@qwen-code/llm';
+ * import { createLLMClient, resolveModelConfig } from '@tiny-agent/llm';
  *
  * const config = resolveModelConfig('qwen-coder-plus', {
  *   'qwen-coder-plus': {

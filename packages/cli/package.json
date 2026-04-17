@@ -1,5 +1,5 @@
 {
-  "name": "@qwen-code/cli",
+  "name": "@tiny-agent/cli",
   "version": "0.15.0",
   "description": "Tiny Agent - Minimal AI Coding Agent CLI",
   "repository": {
@@ -24,8 +24,8 @@
     "dist"
   ],
   "dependencies": {
-    "@qwen-code/llm": "file:../llm",
-    "@qwen-code/qwen-code-core": "file:../core",
+    "@tiny-agent/llm": "file:../llm",
+    "@tiny-agent/core": "file:../core",
     "glob": "^10.5.0"
   },
   "devDependencies": {

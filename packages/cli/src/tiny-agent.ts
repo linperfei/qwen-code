@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * @license
- * Copyright 2026 Qwen Team
+ * Copyright 2026 Tiny Agent Team
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -28,12 +28,12 @@ import {
   createLLMClient,
   type LLMConfig,
   type ToolDefinition,
-} from '@qwen-code/llm';
+} from '@tiny-agent/llm';
 import {
   createAgentLoop,
   createSimpleToolExecutor,
   type AgentLoopEventHandler,
-} from '@qwen-code/qwen-code-core';
+} from '@tiny-agent/core';
 import { readFile, writeFile, readdir } from 'node:fs/promises';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
