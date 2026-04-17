@@ -6,19 +6,19 @@
  */
 
 /**
- * @fileoverview Tiny Agent - A minimal REPL-style AI coding agent.
+ * @fileoverview Tiny Agent - A minimal AI coding agent.
  *
  * Features:
- * - Interactive REPL with multi-turn conversation
+ * - Interactive REPL mode (default)
+ * - Single query mode (with prompt argument)
  * - Streaming output
  * - Built-in tools (read, write, shell, list files)
- * - Simple, clean UI
  * - OpenAI-compatible API support
  *
  * Usage:
- *   tiny-agent
- *   tiny-agent --model gpt-4o --base-url https://api.openai.com/v1
- *   TINY_API_KEY=sk-xxx tiny-agent
+ *   tiny-agent                           # Interactive REPL mode
+ *   tiny-agent "Write a hello world"     # Single query mode
+ *   tiny-agent --model gpt-4o "prompt"   # With options
  */
 
 import * as readline from 'node:readline/promises';
@@ -90,9 +90,9 @@ function saveConfig(config: { model?: string; baseUrl?: string; apiKey?: string 
   writeFileSync(CONFIG_FILE, JSON.stringify(updated, null, 2));
 }
 
-function parseArgs(): Partial<Config> & { showConfig?: boolean } {
+function parseArgs(): Partial<Config> & { showConfig?: boolean; prompt?: string } {
   const args = process.argv.slice(2);
-  const result: Partial<Config> & { showConfig?: boolean } = {};
+  const result: Partial<Config> & { showConfig?: boolean; prompt?: string } = {};
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -102,11 +102,16 @@ function parseArgs(): Partial<Config> & { showConfig?: boolean } {
       result.baseUrl = args[++i];
     } else if (arg === '--api-key' || arg === '-k') {
       result.apiKey = args[++i];
+    } else if (arg === '--max-turns' || arg === '-t') {
+      result.maxTurns = parseInt(args[++i] || '10', 10);
     } else if (arg === '--help' || arg === '-h') {
       printUsage();
       process.exit(0);
     } else if (arg === '--config' || arg === '-c') {
       result.showConfig = true;
+    } else if (!arg.startsWith('-')) {
+      // Positional argument = prompt (single query mode)
+      result.prompt = arg;
     }
   }
 
@@ -118,12 +123,14 @@ function printUsage(): void {
 ${c.bold}Tiny Agent - Your Minimal Coding Agent${c.reset}
 
 ${c.bold}Usage:${c.reset}
-  tiny-agent [options]
+  tiny-agent                           Interactive REPL mode
+  tiny-agent "your prompt here"        Single query mode
 
 ${c.bold}Options:${c.reset}
   -m, --model <model>      Model to use (default: gpt-4o)
   -u, --base-url <url>     API base URL (default: https://api.openai.com/v1)
   -k, --api-key <key>      API key (or set TINY_API_KEY env var)
+  -t, --max-turns <n>      Maximum agent turns (default: 10)
   -c, --config             Show current configuration
   -h, --help               Show this help message
 
@@ -134,6 +141,11 @@ ${c.bold}Environment Variables:${c.reset}
 
 ${c.bold}Config File:${c.reset}
   Config is saved to: ${CONFIG_FILE}
+
+${c.bold}Examples:${c.reset}
+  tiny-agent                              # Start interactive session
+  tiny-agent "Write a Python hello world" # Single query
+  tiny-agent -m gpt-4o "Explain async"    # With specific model
 `);
 }
 
@@ -165,7 +177,7 @@ ${c.dim}Priority: CLI args > TINY_* env vars > config file > OPENAI_API_KEY${c.r
 `);
 }
 
-function getConfig(): Config {
+function getConfig(): Config & { prompt?: string } {
   const args = parseArgs();
 
   // Handle --config flag
@@ -210,13 +222,14 @@ function getConfig(): Config {
     model,
     baseUrl,
     apiKey,
-    maxTurns: 10,
+    maxTurns: args.maxTurns || 10,
     systemPrompt: `You are Tiny Agent, a minimal AI coding assistant. You can:
 - Read and write files using read_file and write_file tools
 - Execute shell commands using run_shell tool
 - List directory contents using list_files tool
 
 Be concise and helpful. Use tools when needed to accomplish tasks.`,
+    prompt: args.prompt,
   };
 }
 
@@ -390,7 +403,73 @@ function printError(message: string) {
 }
 
 function printDivider() {
-  console.log(`${c.dim}${'─'.repeat(40)}${c.reset}`);
+  console.log(`${c.dim}${'─'.repeat(50)}${c.reset}`);
+}
+
+// ============================================================================
+// Single Query Mode
+// ============================================================================
+
+async function runSingleQuery(config: Config & { prompt: string }) {
+  // Create LLM client
+  const llmConfig: LLMConfig = {
+    model: config.model,
+    baseUrl: config.baseUrl,
+    apiKey: config.apiKey,
+  };
+  const llmClient = createLLMClient(llmConfig);
+
+  // Setup tool executor
+  const toolExecutor = setupToolExecutor();
+
+  // Create agent
+  const agent = createAgentLoop(llmClient, toolExecutor, {
+    maxTurns: config.maxTurns,
+    maxTimeMinutes: 30,
+    systemPrompt: config.systemPrompt,
+    userMessage: '',
+  });
+
+  // Event handler
+  const eventHandler: AgentLoopEventHandler = (event) => {
+    switch (event.type) {
+      case 'content':
+        process.stdout.write(event.data as string);
+        break;
+      case 'tool_call': {
+        const tool = event.data as { name: string };
+        console.log(`\n${c.dim}[Tool: ${tool.name}]${c.reset}`);
+        break;
+      }
+      case 'error':
+        console.log(`\n${c.yellow}[Error] ${event.data}${c.reset}`);
+        break;
+    }
+  };
+
+  agent.onEvent(eventHandler);
+
+  // Print header
+  console.log(`
+${c.bold}🤖 Model:${c.reset} ${config.model}
+${c.bold}📝 Prompt:${c.reset} ${config.prompt}
+${c.dim}${'─'.repeat(50)}${c.reset}
+`);
+
+  try {
+    const result = await agent.run(config.prompt);
+
+    console.log(`
+${c.dim}${'─'.repeat(50)}${c.reset}
+${c.green}✅ Turns: ${result.turns} | Reason: ${result.reason} | Duration: ${(result.durationMs / 1000).toFixed(2)}s${c.reset}
+`);
+  } catch (error) {
+    console.log(`
+${c.dim}${'─'.repeat(50)}${c.reset}
+${c.yellow}❌ Error: ${error instanceof Error ? error.message : String(error)}${c.reset}
+`);
+    process.exit(1);
+  }
 }
 
 // ============================================================================
@@ -566,7 +645,13 @@ For other providers:
     process.exit(1);
   }
 
-  await runRepl(config);
+  // Single query mode if prompt is provided
+  if (config.prompt) {
+    await runSingleQuery(config as Config & { prompt: string });
+  } else {
+    // Interactive REPL mode
+    await runRepl(config);
+  }
 }
 
 main().catch((error) => {

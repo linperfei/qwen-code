@@ -10,8 +10,7 @@
   "main": "dist/src/tiny-agent.js",
   "types": "dist/src/tiny-agent.d.ts",
   "bin": {
-    "tiny-agent": "dist/src/tiny-agent.js",
-    "qwen-agent": "dist/src/simple-agent.js"
+    "tiny-agent": "dist/src/tiny-agent.js"
   },
   "scripts": {
     "build": "tsc --build",

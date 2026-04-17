@@ -102,7 +102,7 @@ Assistant: Current directory contains...
 ### Single Query Mode
 
 ```bash
-npm run agent "Write a Python Hello World"
+npm run tiny "Write a Python Hello World"
 ```
 
 ```
@@ -123,16 +123,18 @@ Done! Created hello.py with print("Hello, World!")
 ```bash
 # Show help
 npm run tiny -- --help
-npm run agent -- --help
 
 # Show current configuration
 npm run tiny -- --config
 
-# Override model
-npm run agent -m gpt-4o "Explain async/await"
+# Single query with specific model
+npm run tiny -m gpt-4o "Explain async/await"
 
 # Use custom API endpoint
 npm run tiny -u https://api.your-provider.com/v1 -k your-key
+
+# Set max turns for single query
+npm run tiny -t 5 "Debug this code"
 ```
 
 ### Available Commands
@@ -140,7 +142,7 @@ npm run tiny -u https://api.your-provider.com/v1 -k your-key
 | Command | Description |
 |---------|-------------|
 | `npm run tiny` | Interactive REPL mode |
-| `npm run agent "prompt"` | Single query mode |
+| `npm run tiny "prompt"` | Single query mode |
 | `npm run build` | Build all packages |
 | `npm run test` | Run tests |
 | `npm run clean` | Clean dist directories |
