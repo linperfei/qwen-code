@@ -108,13 +108,12 @@ export class AgentLoop {
         this.turnCount++;
         this.emit('turn_start', { turn: this.turnCount });
 
-        // Generate response
+        // Generate response (content is emitted during streaming)
         const response = await this.generateResponse(signal);
 
-        // Handle content
+        // Store final content
         if (response.content) {
           finalContent = response.content;
-          this.emit('content', response.content);
         }
 
         // Handle tool calls
