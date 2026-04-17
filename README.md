@@ -1,40 +1,41 @@
-# Qwen Code - Minimal AI Agent
+# Tiny Agent - Minimal AI Coding Agent
 
-A minimal, open-source AI agent that lives in your terminal.
+A minimal, open-source AI coding agent that lives in your terminal.
 
 ## Features
 
-- **Minimal Architecture**: Three packages only - CLI, Core, LLM
+- **Minimal Architecture**: Three packages only - CLI, Core, LLM (~1,000 lines)
 - **OpenAI-Compatible**: Support any OpenAI-compatible API endpoint
-- **Built-in Tools**: File operations, shell execution, and more
+- **Built-in Tools**: File operations, shell execution, directory listing
 - **Streaming Output**: Real-time response streaming
+- **Unified Configuration**: Simple config file or environment variables
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
 │                    CLI Layer                     │
-│  (User Interaction, Command Parsing, UI)        │
+│  (tiny-agent, simple-agent)                     │
 └─────────────────────┬───────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────┐
 │                   Core Layer                     │
-│  (Agent Loop, Tool Executor, Context)           │
+│  (AgentLoop, AgentContext, ToolExecutor)        │
 └─────────────────────┬───────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────┐
 │                    LLM Layer                     │
-│  (OpenAI Protocol, Streaming, Token Count)      │
+│  (OpenAI Adapter, Streaming, Types)             │
 └─────────────────────────────────────────────────┘
 ```
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
-| `@qwen-code/cli` | CLI entry point with interactive UI |
-| `@qwen-code/core` | Core logic: Agent, Tools, Services |
-| `@qwen-code/llm` | LLM abstraction with OpenAI protocol |
+| Package | Description | Size |
+|---------|-------------|------|
+| `@qwen-code/cli` | CLI entry points | ~500 lines |
+| `@qwen-code/core` | Agent core: Loop, Context, Executor | ~250 lines |
+| `@qwen-code/llm` | LLM abstraction with OpenAI protocol | ~300 lines |
 
 ## Installation
 
@@ -50,45 +51,119 @@ npm install
 npm run build
 ```
 
+## Configuration
+
+### Config File
+
+Create `~/.tiny-agent/config.json`:
+
+```json
+{
+  "model": "gpt-4o",
+  "baseUrl": "https://api.openai.com/v1",
+  "apiKey": "your-api-key"
+}
+```
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `TINY_API_KEY` | API key for the model service |
+| `TINY_MODEL` | Model name (default: gpt-4o) |
+| `TINY_BASE_URL` | API base URL (default: OpenAI) |
+
+### Priority
+
+`CLI args > TINY_* env vars > config file > OPENAI_API_KEY`
+
 ## Usage
 
-### Interactive Mode
+### Interactive Mode (REPL)
 
 ```bash
-npm run start
+npm run tiny
 ```
 
-### Simple Agent (Non-interactive)
+```
+╔═════════════════════════════════════════════════╗
+║   Tiny Agent - Your Minimal Coding Agent         ║
+╚═════════════════════════════════════════════════╝
+
+Model: gpt-4o
+Base URL: https://api.openai.com/v1
+API Key: ***xxxx
+
+You: list files in current directory
+[Tool: list_files]
+Assistant: Current directory contains...
+```
+
+### Single Query Mode
 
 ```bash
-# Set your API key
-export DASHSCOPE_API_KEY=your-api-key
-
-# Run agent
-node packages/cli/dist/src/simple-agent.js "Write a Python function to sort a list"
-
-# With options
-node packages/cli/dist/src/simple-agent.js \
-  --model gpt-4o \
-  --max-turns 5 \
-  "Explain async/await in JavaScript"
+npm run agent "Write a Python Hello World"
 ```
 
-### Simple Agent Options
-
 ```
-Options:
-  -h, --help          Show help message
-  -m, --model         Model to use (default: qwen-coder-plus)
-  -u, --base-url      API base URL (default: DashScope)
-  -k, --api-key       API key
-  -t, --max-turns     Maximum agent turns (default: 10)
+🤖 Model: gpt-4o
+📝 Prompt: Write a Python Hello World
+──────────────────────────────────────────────────
 
-Environment Variables:
-  DASHSCOPE_API_KEY   API key for DashScope/Qwen
-  QWEN_MODEL          Default model name
-  QWEN_BASE_URL       Default API base URL
+I'll create a Python Hello World program for you.
+[Tool: write_file]
+
+Done! Created hello.py with print("Hello, World!")
+──────────────────────────────────────────────────
+✅ Turns: 2 | Reason: goal_achieved | Duration: 3.21s
 ```
+
+### Command Line Options
+
+```bash
+# Show help
+npm run tiny -- --help
+npm run agent -- --help
+
+# Show current configuration
+npm run tiny -- --config
+
+# Override model
+npm run agent -m gpt-4o "Explain async/await"
+
+# Use custom API endpoint
+npm run tiny -u https://api.your-provider.com/v1 -k your-key
+```
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run tiny` | Interactive REPL mode |
+| `npm run agent "prompt"` | Single query mode |
+| `npm run build` | Build all packages |
+| `npm run test` | Run tests |
+| `npm run clean` | Clean dist directories |
+
+## Built-in Tools
+
+| Tool | Description |
+|------|-------------|
+| `read_file` | Read file contents |
+| `write_file` | Write content to a file |
+| `run_shell` | Execute shell command |
+| `list_files` | List directory contents |
+
+## Supported Providers
+
+Any OpenAI-compatible API:
+
+- OpenAI (`https://api.openai.com/v1`)
+- Azure OpenAI
+- DashScope/Qwen (`https://dashscope.aliyuncs.com/compatible-mode/v1`)
+- Baidu Qianfan (`https://qianfan.baidubce.com/v2/coding`)
+- Local LLMs (Ollama, LM Studio, etc.)
+- Other OpenAI-compatible services
 
 ## Development
 
@@ -99,11 +174,37 @@ npm run test
 # Type check
 npm run typecheck
 
-# Lint
-npm run lint
+# Clean build artifacts
+npm run clean
+```
 
-# Format
-npm run format
+## Project Structure
+
+```
+qwen-code/
+├── package.json           # Root package config
+├── tsconfig.json          # TypeScript config
+├── packages/
+│   ├── llm/               # LLM client layer
+│   │   └── src/
+│   │       ├── adapter/   # OpenAI adapter
+│   │       │   ├── openai.ts
+│   │       │   └── types.ts
+│   │       └── index.ts
+│   │
+│   ├── core/              # Agent core library
+│   │   └── src/
+│   │       ├── agent/
+│   │       │   ├── loop.ts      # Agent reasoning loop
+│   │       │   ├── context.ts   # Immutable state
+│   │       │   ├── executor.ts  # Tool execution
+│   │       │   └── types.ts
+│   │       └── index.ts
+│   │
+│   └── cli/               # CLI entry points
+│       └── src/
+│           ├── tiny-agent.ts    # Interactive REPL
+│           └── simple-agent.ts  # Single query
 ```
 
 ## License
