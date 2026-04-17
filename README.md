@@ -33,9 +33,9 @@ A minimal, open-source AI coding agent that lives in your terminal.
 
 | Package | Description | Size |
 |---------|-------------|------|
-| `@qwen-code/cli` | CLI entry points | ~500 lines |
-| `@qwen-code/core` | Agent core: Loop, Context, Executor | ~250 lines |
-| `@qwen-code/llm` | LLM abstraction with OpenAI protocol | ~300 lines |
+| `@tiny-agent/cli` | CLI entry points | ~500 lines |
+| `@tiny-agent/core` | Agent core: Loop, Context, Executor | ~250 lines |
+| `@tiny-agent/llm` | LLM abstraction with OpenAI protocol | ~300 lines |
 
 ## Installation
 
