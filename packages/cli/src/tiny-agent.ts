@@ -368,9 +368,7 @@ function printBanner(config: Config) {
     : '(not set)';
 
   console.log(`
-${c.bold}${c.magenta}╔═════════════════════════════════════════════════╗
-║   Tiny Agent - Your Minimal Coding Agent         ║
-╚═════════════════════════════════════════════════╝${c.reset}
+${c.bold}${c.cyan}Tiny Agent - Your Minimal Coding Agent${c.reset}
 
 ${c.dim}Model: ${config.model}
 Base URL: ${config.baseUrl}
